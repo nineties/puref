@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: lexer.mll 2010-06-27 23:08:49 nineties $
+ * $Id: lexer.mll 2010-06-27 23:06:46 nineties $
  *)
 
 {
@@ -46,7 +46,7 @@ let digit  = ['0'-'9']
 rule main = parse
     space +
     { main lexbuf }
-    | ';' [^ '\n']* (* comment *)
+    | '#' [^ '\n']* (* comment *)
     { main lexbuf }
     | letter (letter | digit)*
     { match Lexing.lexeme lexbuf with
