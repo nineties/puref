@@ -1,5 +1,9 @@
 RESULT = puref
-SOURCES = main.ml lexer.mll
+SOURCES = \
+	syntax.ml \
+	parser.mly \
+	lexer.mll \
+	main.ml
 
 OCAMLMAKEFILE = OCamlMakefile
 include $(OCAMLMAKEFILE)

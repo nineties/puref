@@ -2,52 +2,22 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: lexer.mll 2010-06-27 23:06:46 nineties $
+ * $Id: lexer.mll 2010-06-28 00:15:54 nineties $
  *)
 
 {
-(* open Parser *)
-type token =
-      Tvar of string
-    | Tint of int
-    | Tlet
-    | Tletrec
-    | Tin
-    | Tcase
-    | Tof
-    | Tpack
-    | Tlbrace
-    | Trbrace
-    | Tlparen
-    | Trparen
-    | Tbackslash
-    | Tsemi
-    | Tequal
-    | Tplus
-    | Tminus
-    | Tmul
-    | Tdiv
-    | Tless
-    | Tlessequal
-    | Tequalequal
-    | Tnotequal
-    | Tgreaterequal
-    | Tgreater
-    | Tand
-    | Tor
-    | Tarrow
-
+open Parser
 }
 
 let space  = [' ' '\t' '\n' '\r']
 let letter = ['A'-'Z' 'a'-'z' '_']
 let digit  = ['0'-'9']
 
-rule main = parse
+rule lex = parse
     space +
-    { main lexbuf }
+    { lex lexbuf }
     | '#' [^ '\n']* (* comment *)
-    { main lexbuf }
+    { lex lexbuf }
     | letter (letter | digit)*
     { match Lexing.lexeme lexbuf with
           "let" -> Tlet
@@ -57,6 +27,7 @@ rule main = parse
         | "of" -> Tof
         | "Pack" -> Tpack
         | s -> Tvar s }
+    | (['0'-'9']* as num) { Tint (int_of_string num) }
     | '{' { Tlbrace }
     | '}' { Trbrace }
     | '(' { Tlparen }
@@ -77,4 +48,7 @@ rule main = parse
     | '&' { Tand }
     | '|' { Tor }
     | "->" { Tarrow }
+    | ',' { Tcomma }
+    | '.' { Tdot }
+    | eof { Teof }
 
