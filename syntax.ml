@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: syntax.ml 2010-06-28 00:05:47 nineties $
+ * $Id: syntax.ml 2010-07-20 21:26:00 nineties $
  *)
 
 type variable = string
@@ -20,4 +20,4 @@ and expression =
     | CaseE of expression * alternative list
     | LambdaE of variable list * expression
 
-type supercombinator = variable list * expression
+type supercombinator = variable * variable list * expression

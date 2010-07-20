@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: parser.mly 2010-06-28 00:15:38 nineties $
+ * $Id: parser.mly 2010-07-20 21:25:53 nineties $
  */
 
 %{
@@ -29,11 +29,11 @@ open Syntax
 %%
 
 program:
-    sc Teof            { [$1] }
+      sc Teof          { [$1] }
     | sc Tsemi program { $1::$3 }
 ;
 sc: // super combinator
-    vars Tequal expr { ($1, $3) }
+    vars Tequal expr { (List.hd $1, List.tl $1, $3) }
 ;
 expr:
       expr aexpr %prec prec_app { AppE($1,$2) }

@@ -1,0 +1,2 @@
+main = K 1 2;
+K x y = x

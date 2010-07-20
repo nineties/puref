@@ -2,11 +2,12 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: pprint.ml 2010-07-07 02:28:51 nineties $
+ * $Id: pprint.ml 2010-07-21 00:42:38 nineties $
  *)
 
 open Format
 open Syntax
+open Gmachine
 
 let binop_string = function
      | Add -> "+"  | Sub -> "-"  | Mul -> "*"  | Div -> "/"  | Lt  -> "<"
@@ -25,7 +26,7 @@ let pp_break_list f ppf elems =
 let rec pp_expr ppf = function
     | VarE id             -> pp_print_string ppf id
     | NumE num            -> pp_print_int ppf num
-    | PackE (id,arity)    -> fprintf ppf "<%d,%d>" id arity
+    | PackE (id,arity)    -> fprintf ppf "Pack{%d,%d}" id arity
     | AppE (f,arg)        -> fprintf ppf "%a %a" pp_expr f pp_aexpr arg
     | InfixE (op,lhs,rhs)
     -> fprintf ppf "@[%a %s %a@]" pp_expr lhs (binop_string op) pp_expr rhs
@@ -48,13 +49,29 @@ and pp_def ppf (var,expr)
     = fprintf ppf "@[%a = %a@]" pp_print_string var pp_expr expr
 
 and pp_alt ppf (id,elems,cont)
-    = fprintf ppf "@[<%d> %a-> %a@]" id pp_vars defs pp_expr cont
+    = fprintf ppf "@[<%d> %a-> %a@]" id pp_vars elems pp_expr cont
 
-let pp_sc ppf (vars,body)
-    = fprintf ppf "@[%a= %a@]" pp_vars vars pp_expr body
+let pp_sc ppf (var,vars,body)
+    = fprintf ppf "@[%s %a= %a@]" var pp_vars vars pp_expr body
 
-let rec pp_program ppf = function
+let rec parsed ppf = function
     | [sc] -> pp_sc ppf sc; pp_print_newline ppf ()
-    | sc::scs -> fprintf ppf "@[<v>%a;@;%a@]" pp_sc sc pp_program scs
+    | sc::scs -> fprintf ppf "@[<v>%a;@;%a@]" pp_sc sc parsed scs
     | _ -> failwith "not reachable"
 
+let pp_insn ppf = function
+    | ScI name -> fprintf ppf "SC %s@." name
+    | NumI num -> fprintf ppf "Num %d@." num
+    | MkappI   -> fprintf ppf "Mkapp@."
+    | PushI i  -> fprintf ppf "Push %d@." i
+    | SlideI n -> fprintf ppf "Slide %d@." n
+    | UnwindI  -> fprintf ppf "Unwind@."
+
+let rec compiled ppf = function
+    | [] -> ()
+    | (name,narg,body)::scs -> begin
+        fprintf ppf "=== %s [%d] ===@." name narg;
+        ignore(List.fold_left (fun i insn -> 
+            fprintf ppf "%4d: " i; pp_insn ppf insn; i+1) 1 body);
+        compiled ppf scs
+    end
