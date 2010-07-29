@@ -1,2 +1,3 @@
-main = K 1 2;
-K x y = x
+main = f 1;
+f x = g x 0;
+g x y = x

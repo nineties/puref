@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: compile.ml 2010-07-21 00:43:31 nineties $
+ * $Id: compile.ml 2010-07-29 19:41:10 nineties $
  *)
 
 open Syntax
@@ -19,7 +19,7 @@ let rec compileC base args = function
     | VarE name when List.mem name args -> [PushI (base + argpos name args)]
     | VarE name -> [ScI name]
     | NumE num -> [NumI num]
-    | AppE(e1,e2) -> compileC 0 args e2 @ compileC 1 args e1 @ [MkappI]
+    | AppE(e1,e2) -> compileC base args e2 @ compileC (base + 1) args e1 @ [MkappI]
     | _ -> failwith "not implemented"
 
 let compileR args body =
