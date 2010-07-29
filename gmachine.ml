@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: gmachine.ml 2010-07-29 19:27:25 nineties $
+ * $Id: gmachine.ml 2010-07-29 20:03:35 nineties $
  *)
 
 type instruction =
@@ -10,11 +10,13 @@ type instruction =
     | NumI of int
     | MkappI
     | PushI of int
-    | SlideI of int
+    | UpdateI of int
+    | PopI of int
     | UnwindI
 
 type node =
     | NumN of int
+    | IndN of node
     | AppN of node * node
     | ScN of int * instruction list
 
@@ -65,13 +67,16 @@ let rec interpret seq =
             let app = stack.(!top - n - 1) in
             push (getarg app);
             interpret is
-    | SlideI n::is  ->
-            stack.(!top - n) <- stack.(!top);
-            drop n;
+    | UpdateI n::is ->
+            let a = stack.(!top) in
+            stack.(!top - n - 1) <- IndN a;
+            drop 1;
             interpret is
+    | PopI n::is -> drop n; interpret is
     | UnwindI::is ->
         begin match stack.(!top) with
             | NumN n -> n
+            | IndN a -> stack.(!top) <- a; interpret seq
             | AppN(f,arg) -> push f; interpret seq
             | ScN(n,sc_seq) -> interpret sc_seq 
         end

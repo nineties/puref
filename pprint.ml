@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: pprint.ml 2010-07-21 00:42:38 nineties $
+ * $Id: pprint.ml 2010-07-29 19:48:57 nineties $
  *)
 
 open Format
@@ -60,12 +60,13 @@ let rec parsed ppf = function
     | _ -> failwith "not reachable"
 
 let pp_insn ppf = function
-    | ScI name -> fprintf ppf "SC %s@." name
-    | NumI num -> fprintf ppf "Num %d@." num
-    | MkappI   -> fprintf ppf "Mkapp@."
-    | PushI i  -> fprintf ppf "Push %d@." i
-    | SlideI n -> fprintf ppf "Slide %d@." n
-    | UnwindI  -> fprintf ppf "Unwind@."
+    | ScI name  -> fprintf ppf "SC %s@." name
+    | NumI num  -> fprintf ppf "Num %d@." num
+    | MkappI    -> fprintf ppf "Mkapp@."
+    | PushI i   -> fprintf ppf "Push %d@." i
+    | UpdateI n -> fprintf ppf "Update %d@." n
+    | PopI n    -> fprintf ppf "Pop %d@." n
+    | UnwindI   -> fprintf ppf "Unwind@."
 
 let rec compiled ppf = function
     | [] -> ()

@@ -2,7 +2,7 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: compile.ml 2010-07-29 19:41:10 nineties $
+ * $Id: compile.ml 2010-07-29 19:48:29 nineties $
  *)
 
 open Syntax
@@ -23,7 +23,8 @@ let rec compileC base args = function
     | _ -> failwith "not implemented"
 
 let compileR args body =
-    compileC 0 args body @ [SlideI (List.length args + 1); UnwindI]
+    let narg = List.length args in
+    compileC 0 args body @ [UpdateI narg; PopI narg; UnwindI]
 
 let compileSC (name,args,body) =
     (name, List.length args, compileR args body)
