@@ -2,23 +2,10 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: gmachine.ml 2010-07-29 20:03:35 nineties $
+ * $Id: gmachine.ml 2010-07-30 04:06:28 nineties $
  *)
 
-type instruction =
-    | ScI of string
-    | NumI of int
-    | MkappI
-    | PushI of int
-    | UpdateI of int
-    | PopI of int
-    | UnwindI
-
-type node =
-    | NumN of int
-    | IndN of node
-    | AppN of node * node
-    | ScN of int * instruction list
+open Vmtypes
 
 (* table of super combinators *)
 let sctable = Hashtbl.create 0
@@ -32,6 +19,9 @@ let push v =
     incr top;
     stack.(!top) <- v
 
+(* for visualize *)
+let step = ref 0
+
 let drop n =
     top := !top - n;
     if !top < 0 then raise (Invalid_argument "index out of range")
@@ -40,7 +30,9 @@ let getarg = function
     | AppN(f,arg) -> arg
     | _ -> failwith "arg: not reachable"
 
-let rec interpret seq =
+let rec interpret vis seq =
+    vis !step seq stack !top;
+    incr step;
     match seq with
     | [] ->
         if !top <> 0 then
@@ -53,34 +45,51 @@ let rec interpret seq =
         try
             let m = Hashtbl.find sctable name in
             push m;
-            interpret is
+            interpret vis is
         with Not_found -> failwith ("undefined super combinator: " ^ name)
     end
-    | NumI n::is -> push (NumN n); interpret is
+    | NumI n::is -> push (NumN n); interpret vis is
     | MkappI::is ->
             let f = stack.(!top) in
             let a = stack.(!top-1) in
             drop 2;
             push (AppN(f, a));
-            interpret is
+            interpret vis is
     | PushI n::is ->
             let app = stack.(!top - n - 1) in
             push (getarg app);
-            interpret is
+            interpret vis is
+    | SlideI n::is ->
+            let a = stack.(!top) in
+            stack.(!top - n) <- a;
+            drop n;
+            interpret vis is
     | UpdateI n::is ->
             let a = stack.(!top) in
             stack.(!top - n - 1) <- IndN a;
             drop 1;
-            interpret is
-    | PopI n::is -> drop n; interpret is
+            interpret vis is
+    | PopI n::is -> drop n; interpret vis is
     | UnwindI::is ->
         begin match stack.(!top) with
-            | NumN n -> n
-            | IndN a -> stack.(!top) <- a; interpret seq
-            | AppN(f,arg) -> push f; interpret seq
-            | ScN(n,sc_seq) -> interpret sc_seq 
+            | NumN n        -> n
+            | IndN a        -> stack.(!top) <- a; interpret vis seq
+            | AppN(f,arg)   -> push f; interpret vis seq
+            | ScN(_,_,sc_seq) -> interpret vis sc_seq
         end
 
-let register_sc (name,narg,seq) = Hashtbl.add sctable name (ScN(narg,seq))
+let register_sc (name,narg,seq) = Hashtbl.add sctable name (ScN(name,narg,seq))
 let register_scs scs = ignore( List.map register_sc scs )
-let run_main () = interpret [ScI "main"; UnwindI]
+
+let run vis = interpret vis [ScI "main"; UnwindI]
+let run_main () =
+    match !Option.visualize with
+    | None -> run (fun _ _ _ _ -> ())
+    | Some file ->
+            let oc = open_out (file ^ ".dot") in
+            Format.set_formatter_out_channel oc;
+            let ret = run Visualize.drawVM in
+            close_out oc;
+            Format.set_formatter_out_channel stdout;
+            Visualize.compile file;
+            ret

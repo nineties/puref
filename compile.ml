@@ -2,11 +2,11 @@
  * puref - 
  * Copyright (C) 2010 nineties
  * 
- * $Id: compile.ml 2010-07-29 19:48:29 nineties $
+ * $Id: compile.ml 2010-07-30 03:54:25 nineties $
  *)
 
 open Syntax
-open Gmachine
+open Vmtypes
 
 let argpos name args = 
     let rec f i ls = match ls with
@@ -24,7 +24,10 @@ let rec compileC base args = function
 
 let compileR args body =
     let narg = List.length args in
-    compileC 0 args body @ [UpdateI narg; PopI narg; UnwindI]
+    match !Option.mark with
+    | 1 -> compileC 0 args body @ [SlideI (narg+1); UnwindI]
+    | 2 -> compileC 0 args body @ [UpdateI narg; PopI narg; UnwindI]
+    | _ -> failwith "compileR: not reachable"
 
 let compileSC (name,args,body) =
     (name, List.length args, compileR args body)
